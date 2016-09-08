@@ -12,3 +12,5 @@ bin
 .nrepl-port
 /foo/
 irods-config
+GIT_COMMIT
+VERSION

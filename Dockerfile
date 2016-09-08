@@ -1,16 +1,21 @@
-FROM alpine:3.2
+FROM clojure:alpine
+
+RUN apk add --update git && \
+    rm -rf /var/cache/apk
 
 ARG git_commit=unknown
-ARG buildenv_git_commit=unknown
 ARG version=unknown
 LABEL org.iplantc.de.porklock.git-ref="$git_commit" \
-      org.iplantc.de.porklock.version="$version" \
-      org.iplantc.de.buildenv.git-ref="$buildenv_git_commit"
+      org.iplantc.de.porklock.version="$version"
 
-RUN apk --update add openjdk7-jre
+COPY . /usr/src/app
 
-ADD target/porklock-standalone.jar /porklock-standalone.jar
+WORKDIR /usr/src/app
 
-ENTRYPOINT ["java", "-jar", "/porklock-standalone.jar"]
+RUN lein uberjar && \
+    cp target/porklock-standalone.jar .
 
+RUN ln -s "/usr/bin/java" "/bin/porklock"
+
+ENTRYPOINT ["porklock", "-jar", "/porklock-standalone.jar"]
 CMD ["--help"]

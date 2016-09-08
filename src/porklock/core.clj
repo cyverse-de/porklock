@@ -159,7 +159,7 @@
   [& args]
   (try+
     (let [cmd          (command args)
-          version-info (version/version-info "org.iplantc" "porklock")
+          version-info (version/version-info "org.cyverse" "porklock")
           cmd-args     (rest args)
           [options remnants banner] (settings cmd cmd-args)]
 
