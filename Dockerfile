@@ -17,5 +17,5 @@ RUN lein uberjar && \
 
 RUN ln -s "/usr/bin/java" "/bin/porklock"
 
-ENTRYPOINT ["porklock", "-jar", "/porklock-standalone.jar"]
+ENTRYPOINT ["porklock", "-jar", "porklock-standalone.jar"]
 CMD ["--help"]
