@@ -1,3 +1,4 @@
+#!groovy
 def repo = "porklock"
 def dockerUser = "discoenv"
 
