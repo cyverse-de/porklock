@@ -5,8 +5,9 @@ RUN apk add --update git && \
 
 ARG git_commit=unknown
 ARG version=unknown
-LABEL org.iplantc.de.porklock.git-ref="$git_commit" \
-      org.iplantc.de.porklock.version="$version"
+
+LABEL org.cyverse.git-ref="$git_commit"
+LABEL org.cyverse.version="$version"
 
 COPY . /usr/src/app
 
