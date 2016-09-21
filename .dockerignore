@@ -14,4 +14,7 @@ bin
 irods-config
 GIT_COMMIT
 VERSION
+build.xml
+test2junit
 Jenkinsfile
+service.properties

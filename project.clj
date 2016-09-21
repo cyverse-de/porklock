@@ -16,6 +16,7 @@
   :main ^:skip-aot porklock.core
   :profiles {:uberjar {:aot :all}}
   :uberjar-name "porklock-standalone.jar"
+  :plugins [[test2junit "1.2.2"]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.cli "0.3.1"]
                  [org.clojure/tools.logging "0.3.1"]
