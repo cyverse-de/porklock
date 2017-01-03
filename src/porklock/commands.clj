@@ -179,16 +179,18 @@
               (porkprint "iput failed:" err)
               (reset! error? true))))))))
 
+(def script-loc
+  (memoize (fn []
+             (ft/dirname (ft/abs-path (System/getenv "SCRIPT_LOCATION"))))))
+
 (defn- upload-nfs-files
   [cm options]
   (if (and (System/getenv "SCRIPT_LOCATION") (not (:skip-parent-meta options)))
-    (let [script-loc  (ft/dirname (ft/abs-path (System/getenv "SCRIPT_LOCATION")))
-          dest        (ft/path-join (:destination options) "logs")
-          exclude-map (merge options {:source script-loc})
-          exclusions  (set (exclude-files-from-dir exclude-map))]
+    (let [dest       (ft/path-join (:destination options) "logs")
+          exclusions (set (exclude-files-from-dir (merge options {:source (script-loc)})))]
       (porkprint "Exclusions:\n" exclusions)
-      (doseq [fileobj (file-seq (clojure.java.io/file script-loc))]
-        (let [src (.getAbsolutePath fileobj)
+      (doseq [fileobj (file-seq (clojure.java.io/file (script-loc)))]
+        (let [src       (.getAbsolutePath fileobj)
               dest-path (ft/path-join dest (ft/basename src))]
           (try+
            (when-not (or (.isDirectory fileobj) (contains? exclusions src))
