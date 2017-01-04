@@ -6,13 +6,13 @@
             [clj-jargon.item-ops :as ops]
             [clj-jargon.metadata :as meta]
             [clj-jargon.permissions :as perms]
+            [clojure-commons.file-utils :as ft]
             [clojure.java.io :as io]
             [slingshot.slingshot :refer [throw+ try+]]
             [clojure-commons.file-utils :as ft])
   (:import [java.io File]                                            ; needed for cursive type navigation
            [org.irods.jargon.core.exception DuplicateDataException]
            [org.irods.jargon.core.transfer TransferStatus]))         ; needed for cursive type navigation
-
 
 (def porkprint (partial println "[porklock] "))
 
@@ -170,7 +170,10 @@
           (apply-metadata cm dir-dest (:meta options))
 
           (try+
-            (retry 10 ops/iput cm src dest tcl)
+           (if (ft/dir? src)
+             (if-not (info/exists? cm dest)
+              (ops/mkdir cm dest))
+             (retry 10 ops/iput cm src dest tcl))
 
             ;;; Apply the App and Execution metadata to the newly uploaded file/directory.
             (porkprint "Applying metadata to" dest)

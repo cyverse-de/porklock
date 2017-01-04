@@ -8,7 +8,8 @@
             [common-cli.version :as version]
             [clojure-commons.error-codes
              :as error
-             :refer [ERR_DOES_NOT_EXIST ERR_NOT_A_FILE ERR_NOT_A_FOLDER ERR_NOT_WRITEABLE]]))
+             :refer [ERR_DOES_NOT_EXIST ERR_NOT_A_FILE ERR_NOT_A_FOLDER ERR_NOT_WRITEABLE]])
+  (:import [org.apache.log4j Logger Level]))
 
 
 (defn- fmeta-split
