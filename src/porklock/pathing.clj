@@ -77,7 +77,7 @@
         excludes (exclude-files options)
         allfiles (set (filtered-files (:source options) (exclude-files options)))]
     (println "EXCLUDING: " excludes)
-    (vec (union allfiles includes))))
+    (filter #(transferable? %1) (vec (union allfiles includes)))))
 
 (defn- str-contains?
   [s match]
@@ -87,7 +87,8 @@
 
 (defn- fix-path
   [transfer-file sdir ddir]
-  (ft/rm-last-slash (ft/path-join ddir (string/replace transfer-file (re-pattern sdir) ""))))
+  (ft/rm-last-slash
+   (ft/path-join ddir (string/replace transfer-file (re-pattern sdir) ""))))
 
 (defn relative-dest-paths
   "Constructs a list of absolute destination paths based on the
@@ -99,6 +100,5 @@
       merge
       (map
         #(if (str-contains? %1 sdir)
-           {%1 (fix-path %1 sdir dest-dir)}
-           {%1 %1})
+           {%1 (fix-path %1 sdir dest-dir)})
         transfer-files))))
