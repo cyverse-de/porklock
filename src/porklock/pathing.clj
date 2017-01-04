@@ -77,7 +77,7 @@
         excludes (exclude-files options)
         allfiles (set (filtered-files (:source options) (exclude-files options)))]
     (println "EXCLUDING: " excludes)
-    (vec (union allfiles includes))))
+    (filter #(transferable? %1) (vec (union allfiles includes)))))
 
 (defn- str-contains?
   [s match]

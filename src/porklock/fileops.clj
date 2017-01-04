@@ -19,3 +19,7 @@
   "Takes in a sequence of paths and turns them all into absolute paths."
   [paths]
   (map ft/abs-path paths))
+
+(defn transferable?
+  [path]
+  (or (.isFile (file path)) (.isDirectory (file path))))
