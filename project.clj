@@ -22,6 +22,6 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [commons-io/commons-io "2.4"]
                  [slingshot "0.12.2"]
-                 [org.cyverse/clj-jargon "2.8.2"]
+                 [org.cyverse/clj-jargon "2.8.3"]
                  [org.cyverse/clojure-commons "2.8.0"]
                  [org.cyverse/common-cli "2.8.1"]])
