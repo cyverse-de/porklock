@@ -6,6 +6,7 @@
   (:require [clojure.tools.cli :as cli]
             [clojure.string :as string]
             [common-cli.version :as version]
+            [porklock.vault :as pork-vault]
             [clojure-commons.error-codes
              :as error
              :refer [ERR_DOES_NOT_EXIST ERR_NOT_A_FILE ERR_NOT_A_FOLDER ERR_NOT_WRITEABLE]])
@@ -36,11 +37,6 @@
        "--destination"
        "The local directory that the files will be downloaded into."
        :default "."]
-
-      ["-c"
-       "--config"
-       "Tells porklock where to read its configuration."
-       :default nil]
 
       ["-m"
        "--meta"
@@ -93,11 +89,6 @@
        "The destination directory in iRODS."
        :default nil]
 
-      ["-c"
-       "--config"
-       "Tells porklock where to read its configuration."
-       :default nil]
-
       ["-m"
        "--meta"
        "Comma-delimited ATTR-VALUE-UNIT"
@@ -112,6 +103,24 @@
        "--help"
        "Prints this help."
        :flag true])))
+
+(defn- vault-settings
+  "Reads the VAULT_TOKEN, VAULT_ADDR, and JOB_UUID environment variables and
+   places them into the options map as :vault-token, :vault-addr, and :job-uuid,
+   respectively. This function does not check if the settings are empty before
+   adding them to the map, that should be done elsewhere."
+  [options]
+  (assoc options :vault-token (System/getenv "VAULT_TOKEN")
+                 :vault-addr  (System/getenv "VAULT_ADDR")
+                 :job-uuid    (System/getenv "JOB_UUID")))
+
+(defn- read-vault-config
+  "Reads the iRODS config from Vault and puts it into the options map as a
+   string value with a key of :config."
+  [options]
+  (assoc options :config (pork-vault/irods-config (:vault-addr options)
+                                                  (:vault-token options)
+                                                  (:job-uuid options))))
 
 (def usage "Usage: porklock get|put [options]")
 
@@ -162,7 +171,8 @@
     (let [cmd          (command args)
           version-info (version/version-info "org.cyverse" "porklock")
           cmd-args     (rest args)
-          [options remnants banner] (settings cmd cmd-args)]
+          [options remnants banner] (settings cmd cmd-args)
+          options      (vault-settings options)]
 
       (when (= cmd "--version")
         (println version-info)
@@ -184,12 +194,12 @@
       (case cmd
         "get"   (do
                   (validate-get options)
-                  (iget-command options)
+                  (iget-command (read-vault-config options))
                   (System/exit 0))
 
         "put"   (do
                   (validate-put options)
-                  (iput-command options)
+                  (iput-command (read-vault-config options))
                   (System/exit 0))
 
         (do
