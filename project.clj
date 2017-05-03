@@ -18,10 +18,11 @@
   :uberjar-name "porklock-standalone.jar"
   :plugins [[test2junit "1.2.2"]]
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/tools.cli "0.3.1"]
+                 [org.clojure/tools.cli "0.3.5"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [commons-io/commons-io "2.4"]
+                 [commons-io/commons-io "2.5"]
                  [slingshot "0.12.2"]
                  [org.cyverse/clj-jargon "2.8.3"]
-                 [org.cyverse/clojure-commons "2.8.0"]
-                 [org.cyverse/common-cli "2.8.1"]])
+                 [org.cyverse/clojure-commons "2.8.3"]
+                 [org.cyverse/common-cli "2.8.1"]
+                 [amperity/vault-clj "0.4.0"]])

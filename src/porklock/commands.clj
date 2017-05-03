@@ -17,8 +17,8 @@
 (def porkprint (partial println "[porklock] "))
 
 (defn init-jargon
-  [cfg-path]
-  (load-config-from-file cfg-path)
+  [cfg-string]
+  (load-config-from-string cfg-string)
   (jg/init (irods-host)
            (irods-port)
            (irods-user)
