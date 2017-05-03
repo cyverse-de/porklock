@@ -4,7 +4,7 @@
   (:import [java.util Base64]))
 
 (defn client
-  "Creates and returns a Vault client that will connects to the provided Vault
+  "Creates and returns a Vault client that will connect to the provided Vault
    API URI and is already authenticated with the given token."
   [uri token]
   (-> (vault/new-client uri)
