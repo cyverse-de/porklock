@@ -45,17 +45,18 @@
     (throw+ {:error_code ERR_PATH_NOT_ABSOLUTE
              :path (:destination options)}))
 
-  (if-not (:vault-addr options)
-    (throw+ {:error_code ERR_MISSING_OPTION
-             :option "VAULT_ADDR environment variable"}))
+  (when-not (:debug-config options)
+    (if-not (:vault-addr options)
+      (throw+ {:error_code ERR_MISSING_OPTION
+               :option "VAULT_ADDR environment variable"}))
 
-  (if-not (:vault-token options)
-    (throw+ {:error_code ERR_MISSING_OPTION
-             :option "VAULT_TOKEN environment variable"}))
+    (if-not (:vault-token options)
+      (throw+ {:error_code ERR_MISSING_OPTION
+               :option "VAULT_TOKEN environment variable"}))
 
-  (if-not (:job-uuid options)
-    (throw+ {:error_code ERR_MISSING_OPTION
-             :option "JOB_UUID environment variable"}))
+    (if-not (:job-uuid options)
+      (throw+ {:error_code ERR_MISSING_OPTION
+               :option "JOB_UUID environment variable"})))
 
   (println "Files to upload: ")
     (pprint (files-to-transfer options))
@@ -96,17 +97,18 @@
     (throw+ {:error_code ERR_MISSING_OPTION
              :option "--destination"}))
 
-  (if-not (:vault-addr options)
-    (throw+ {:error_code ERR_MISSING_OPTION
-             :option "VAULT_ADDR environment variable"}))
+  (when-not (:debug-config options)
+    (if-not (:vault-addr options)
+      (throw+ {:error_code ERR_MISSING_OPTION
+               :option "VAULT_ADDR environment variable"}))
 
-  (if-not (:vault-token options)
-    (throw+ {:error_code ERR_MISSING_OPTION
-             :option "VAULT_TOKEN environment variable"}))
+    (if-not (:vault-token options)
+      (throw+ {:error_code ERR_MISSING_OPTION
+               :option "VAULT_TOKEN environment variable"}))
 
-  (if-not (:job-uuid options)
-    (throw+ {:error_code ERR_MISSING_OPTION
-             :option "JOB_UUID environment variable"}))
+    (if-not (:job-uuid options)
+      (throw+ {:error_code ERR_MISSING_OPTION
+               :option "JOB_UUID environment variable"})))
 
   (let [paths-to-check (flatten [(:destination options)])]
     (doseq [p paths-to-check]

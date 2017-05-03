@@ -28,6 +28,11 @@
        "The user the tool should run as."
        :default nil]
 
+      ["-z"
+       "--debug-config"
+       "The path to a local iRODS config. Used for debugging purposes only."
+       :default nil]
+
       ["-s"
        "--source"
        "The directory in iRODS contains files to be downloaded."
@@ -57,6 +62,11 @@
       ["-u"
        "--user"
        "The user the tool should run as."
+       :default nil]
+
+      ["-z"
+       "--debug-config"
+       "The path to a local iRODS config. Used for debugging purposes only."
        :default nil]
 
       ["-e"
@@ -118,9 +128,11 @@
   "Reads the iRODS config from Vault and puts it into the options map as a
    string value with a key of :config."
   [options]
-  (assoc options :config (pork-vault/irods-config (:vault-addr options)
-                                                  (:vault-token options)
-                                                  (:job-uuid options))))
+  (if (:debug-config options)
+    (assoc options :config (slurp (:debug-config options)))
+    (assoc options :config (pork-vault/irods-config (:vault-addr options)
+                                                    (:vault-token options)
+                                                    (:job-uuid options)))))
 
 (def usage "Usage: porklock get|put [options]")
 
