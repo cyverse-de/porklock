@@ -61,8 +61,7 @@
     (pprint (files-to-transfer options))
     (println " ")
 
-  (let [paths-to-check (flatten [(files-to-transfer options)
-                                 (:config options)])]
+  (let [paths-to-check (flatten [(files-to-transfer options)])]
 
     (println "Paths to check: ")
     (pprint paths-to-check)
@@ -109,8 +108,7 @@
     (throw+ {:error_code ERR_MISSING_OPTION
              :option "JOB_UUID environment variable"}))
 
-  (let [paths-to-check (flatten [(:destination options)
-                                 (:config options)])]
+  (let [paths-to-check (flatten [(:destination options)])]
     (doseq [p paths-to-check]
       (if (not (ft/exists? p))
         (throw+ {:error_code ERR_DOES_NOT_EXIST
