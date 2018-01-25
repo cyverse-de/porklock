@@ -4,8 +4,7 @@
   (:require [clojure.string :as string]
             [clojure-commons.file-utils :as ft]))
 
-(defn relative-paths-to-exclude
-  []
+(def relative-paths-to-exclude
   [".irods"
    ".irods/.irodsA"
    ".irods/.irodsEnv"
@@ -16,31 +15,36 @@
    ".irodsA"
    ".irodsEnv"])
 
+(defn- parse-exclude-file
+  "Returns a list of paths read from the file at the given `exclude-file-path`, or nil if the file does not exist."
+  [exclude-file-path delimiter]
+  (when (ft/exists? (str exclude-file-path))
+    (remove string/blank?
+            (string/split (slurp exclude-file-path)
+                          (re-pattern delimiter)))))
+
+(defn- paths-to-exclude
+  "Returns a list containing the static `relative-paths-to-exclude`
+   and the paths read from the file at the given `exclude-file-path`."
+  [exclude-file-path delimiter]
+  (concat relative-paths-to-exclude
+          (parse-exclude-file exclude-file-path delimiter)))
+
 (defn exclude-files-from-dir
   "Splits up the exclude option and turns the result into paths in the source dir."
-  [{source :source excludes :exclude delimiter :exclude-delimiter}]
-  (let [irods-files (relative-paths-to-exclude)]
-    (if-not (string/blank? excludes)
-      (mapv
-        #(if-not (.startsWith % "/")
-           (ft/path-join source %)
-           %)
-        (concat
-          (string/split excludes (re-pattern delimiter))
-          irods-files))
-      (mapv
-        #(ft/path-join source %)
-        irods-files))))
+  [{source :source exclude-file :exclude delimiter :exclude-delimiter}]
+  (mapv
+   #(if-not (.startsWith % "/")
+     (ft/path-join source %)
+     %)
+   (paths-to-exclude exclude-file delimiter)))
 
 (defn exclude-files
   "Splits up the exclude option and turns them all into absolute paths."
-  [{excludes :exclude delimiter :exclude-delimiter :as in-map}]
-  (let [irods-files (relative-paths-to-exclude)]
-    (if-not (string/blank? excludes)
-      (concat
-        (exclude-files-from-dir in-map)
-        (absify (concat (string/split excludes (re-pattern delimiter)) irods-files)))
-      (concat (exclude-files-from-dir in-map) irods-files))))
+  [{exclude-file :exclude delimiter :exclude-delimiter :as options}]
+  (concat
+   (exclude-files-from-dir options)
+   (absify (paths-to-exclude exclude-file delimiter))))
 
 (defn include-files
   "Splits up the include option and turns them all into absolute paths."
@@ -75,7 +79,7 @@
   [options]
   (let [includes (set (include-files options))
         excludes (exclude-files options)
-        allfiles (set (filtered-files (:source options) (exclude-files options)))]
+        allfiles (set (filtered-files (:source options) excludes))]
     (println "EXCLUDING: " excludes)
     (filter #(transferable? %1) (vec (union allfiles includes)))))
 

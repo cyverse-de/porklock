@@ -9,8 +9,7 @@
             [porklock.vault :as pork-vault]
             [clojure-commons.error-codes
              :as error
-             :refer [ERR_DOES_NOT_EXIST ERR_NOT_A_FILE ERR_NOT_A_FOLDER ERR_NOT_WRITEABLE]])
-  (:import [org.apache.log4j Logger Level]))
+             :refer [ERR_DOES_NOT_EXIST ERR_NOT_A_FILE ERR_NOT_A_FOLDER ERR_NOT_WRITEABLE]]))
 
 
 (defn- fmeta-split
@@ -71,13 +70,13 @@
 
       ["-e"
        "--exclude"
-       "List of files to be excluded from uploads."
+       "The path to a file containing a list of paths to be excluded from uploads."
        :default ""]
 
       ["-x"
        "--exclude-delimiter"
        "Delimiter for the list of files to be excluded from uploads"
-       :default ","]
+       :default "\n"]
 
       ["-i"
        "--include"
