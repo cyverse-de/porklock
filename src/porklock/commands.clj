@@ -244,13 +244,13 @@
 
 (defn- parse-source-list
   "Returns a list of paths read from the the given `source-list` path list file, or nil if the file does not exist.
-   Assumes the first line of the path list is a header-line, and discards it from the results."
+   Removes lines beginning with a hash character: #."
   [source-list]
   (when (ft/exists? (str source-list))
     (->> source-list
          slurp
          string/split-lines
-         rest)))
+         (remove #(string/starts-with? % "#")))))
 
 (defn apply-input-metadata
   [cm user fpath meta]
