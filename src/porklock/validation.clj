@@ -89,9 +89,9 @@
   (if-not (usable? (:user options))
     (throw+ {:error_code ERR_ACCESS_DENIED}))
 
-  (if-not (:source options)
+  (if-not (or (:source options) (:source-list options))
     (throw+ {:error_code ERR_MISSING_OPTION
-             :option "--source"}))
+             :option "--source or --source-list"}))
 
   (if-not (:destination options)
     (throw+ {:error_code ERR_MISSING_OPTION
