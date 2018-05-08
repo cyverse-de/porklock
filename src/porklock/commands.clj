@@ -8,8 +8,8 @@
             [clj-jargon.permissions :as perms]
             [clojure-commons.file-utils :as ft]
             [clojure.java.io :as io]
-            [slingshot.slingshot :refer [throw+ try+]]
-            [clojure-commons.file-utils :as ft])
+            [clojure.string :as string]
+            [slingshot.slingshot :refer [throw+ try+]])
   (:import [java.io File]                                            ; needed for cursive type navigation
            [org.irods.jargon.core.exception DuplicateDataException]
            [org.irods.jargon.core.transfer TransferStatus]))         ; needed for cursive type navigation
@@ -242,6 +242,16 @@
     (if @error?
       (throw (Exception. "An error occurred tranferring files into iRODS. Please check the above logs for more information.")))))
 
+(defn- parse-source-list
+  "Returns a list of paths read from the the given `source-list` path list file, or nil if the file does not exist.
+   Assumes the first line of the path list is a header-line, and discards it from the results."
+  [source-list]
+  (when (ft/exists? (str source-list))
+    (->> source-list
+         slurp
+         string/split-lines
+         rest)))
+
 (defn apply-input-metadata
   [cm user fpath meta]
   (if-not (info/is-dir? cm fpath)
@@ -253,9 +263,10 @@
           (apply-metadata cm abs-path meta))))))
 
 (defn iget-command
-  "Runs the iget icommand, retrieving files from --source
-   to the local --destination."
-  [options]
-  (jg/with-jargon (init-jargon (:config options)) :client-user (:user options) [cm]
-    (apply-input-metadata cm (:user options) (ft/rm-last-slash (:source options)) (:meta options))
-    (retry 10 ops/iget cm (:source options) (:destination options) tcl)))
+  "Runs the iget icommand, retrieving files from --source and --source-list to the local --destination."
+  [{:keys [config user meta source-list source destination]}]
+  (jg/with-jargon (init-jargon config) :client-user user [cm]
+    (let [paths (remove string/blank? (conj (parse-source-list source-list) source))]
+      (doseq [remote-path paths]
+        (apply-input-metadata cm user (ft/rm-last-slash remote-path) meta)
+        (retry 10 ops/iget cm remote-path destination tcl)))))

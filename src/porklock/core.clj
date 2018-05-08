@@ -34,7 +34,12 @@
 
       ["-s"
        "--source"
-       "The directory in iRODS contains files to be downloaded."
+       "A path in iRODS to be downloaded."
+       :default nil]
+
+      ["-l"
+       "--source-list"
+       "A path to a local Path-List file, containing a list of paths in iRODS to be downloaded."
        :default nil]
 
       ["-d"
