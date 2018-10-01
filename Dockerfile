@@ -2,7 +2,7 @@ FROM clojure:lein-alpine
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache --update git
+RUN apk add --no-cache git
 
 RUN ln -s "/usr/bin/java" "/bin/porklock"
 
