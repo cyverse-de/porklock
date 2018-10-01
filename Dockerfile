@@ -1,9 +1,10 @@
-FROM clojure:alpine
-
-RUN apk add --update git && \
-    rm -rf /var/cache/apk
+FROM clojure:lein-alpine
 
 WORKDIR /usr/src/app
+
+RUN apk add --no-cache --update git
+
+RUN ln -s "/usr/bin/java" "/bin/porklock"
 
 COPY project.clj /usr/src/app/
 RUN lein deps
@@ -12,8 +13,6 @@ COPY . /usr/src/app
 
 RUN lein uberjar && \
     cp target/porklock-standalone.jar .
-
-RUN ln -s "/usr/bin/java" "/bin/porklock"
 
 ENTRYPOINT ["porklock", "-jar", "/usr/src/app/porklock-standalone.jar"]
 CMD ["--help"]
