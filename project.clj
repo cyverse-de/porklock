@@ -24,5 +24,4 @@
                  [slingshot "0.12.2"]
                  [org.cyverse/clj-jargon "2.8.6"]
                  [org.cyverse/clojure-commons "2.8.3"]
-                 [org.cyverse/common-cli "2.8.1"]
-                 [amperity/vault-clj "0.4.0"]])
+                 [org.cyverse/common-cli "2.8.1"]])

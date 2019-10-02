@@ -58,19 +58,6 @@
   (when-not (cc/validate-config configs config-valid)
     (throw+ {:error_code ce/ERR_CONFIG_INVALID})))
 
-(defn- set-props-from-string
-  [config]
-  (dosync
-    (ref-set props
-            (doto (java.util.Properties.)
-                  (.load (java.io.StringReader. config))))))
-
-(defn load-config-from-string
-  [config]
-  (set-props-from-string config)
-  (cc/log-config props :filters [#"irods-user"])
-  (validate-config))
-
 (defn load-config-from-file
   "Loads the configuration settings from a file."
   [config-path]
