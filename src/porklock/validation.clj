@@ -45,24 +45,16 @@
     (throw+ {:error_code ERR_PATH_NOT_ABSOLUTE
              :path (:destination options)}))
 
-  (when-not (:debug-config options)
-    (if-not (:vault-addr options)
-      (throw+ {:error_code ERR_MISSING_OPTION
-               :option "VAULT_ADDR environment variable"}))
-
-    (if-not (:vault-token options)
-      (throw+ {:error_code ERR_MISSING_OPTION
-               :option "VAULT_TOKEN environment variable"}))
-
-    (if-not (:job-uuid options)
-      (throw+ {:error_code ERR_MISSING_OPTION
-               :option "JOB_UUID environment variable"})))
+  (if-not (:config options)
+    (throw+ {:error_code ERR_MISSING_OPTION
+             :option "--config"}))
 
   (println "Files to upload: ")
     (pprint (files-to-transfer options))
     (println " ")
 
-  (let [paths-to-check (flatten [(files-to-transfer options)])]
+  (let [paths-to-check (flatten [(files-to-transfer options)
+                                 (:config options)])]
 
     (println "Paths to check: ")
     (pprint paths-to-check)
@@ -97,20 +89,12 @@
     (throw+ {:error_code ERR_MISSING_OPTION
              :option "--destination"}))
 
-  (when-not (:debug-config options)
-    (if-not (:vault-addr options)
-      (throw+ {:error_code ERR_MISSING_OPTION
-               :option "VAULT_ADDR environment variable"}))
+  (if-not (:config options)
+    (throw+ {:error_code ERR_MISSING_OPTION
+             :option "--config"}))
 
-    (if-not (:vault-token options)
-      (throw+ {:error_code ERR_MISSING_OPTION
-               :option "VAULT_TOKEN environment variable"}))
-
-    (if-not (:job-uuid options)
-      (throw+ {:error_code ERR_MISSING_OPTION
-               :option "JOB_UUID environment variable"})))
-
-  (let [paths-to-check (flatten [(:destination options)])]
+  (let [paths-to-check (flatten [(:destination options)
+                                 (:config options)])]
     (doseq [p paths-to-check]
       (if (not (ft/exists? p))
         (throw+ {:error_code ERR_DOES_NOT_EXIST
