@@ -95,13 +95,14 @@
    (ft/path-join ddir (string/replace transfer-file (re-pattern sdir) ""))))
 
 (defn relative-dest-paths
-  "Constructs a list of absolute destination paths based on the
-   input and the given source directory."
+  "Constructs a sorted map between source paths and absolute destination paths
+   based on the input and the given source directory."
   [transfer-files source-dir dest-dir]
 
   (let [sdir (ft/add-trailing-slash source-dir)]
     (apply
       merge
+      (sorted-map)
       (map
         #(if (str-contains? %1 sdir)
            {%1 (fix-path %1 sdir dest-dir)})
