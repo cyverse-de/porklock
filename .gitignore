@@ -17,3 +17,4 @@ VERSION
 build.xml
 test2junit
 .idea
+.tramp_history
