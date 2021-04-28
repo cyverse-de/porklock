@@ -1,10 +1,10 @@
-FROM clojure:lein-alpine
+FROM clojure:openjdk-17-lein-alpine
 
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache git
 
-RUN ln -s "/usr/bin/java" "/bin/porklock"
+RUN ln -s "/opt/openjdk-17/bin/java" "/bin/porklock"
 
 COPY project.clj /usr/src/app/
 RUN lein deps
