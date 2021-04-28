@@ -22,19 +22,9 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [commons-io/commons-io "2.5"]
                  [slingshot "0.12.2"]
-                 [org.cyverse/clj-jargon "2.8.6"]
+                 [org.cyverse/clj-jargon "3.0.0-SNAPSHOT"]
                  [org.cyverse/clojure-commons "2.8.3"]
-                 [org.cyverse/common-cli "2.8.1"]
-                 [org.irods.jargon/jargon-core "4.1.10.0-RELEASE"
-                  :exclusions [[org.jglobus/JGlobus-Core]
-                               [org.slf4j/slf4j-api]
-                               [org.slf4j/slf4j-log4j12]]]
-                 [org.irods.jargon/jargon-data-utils "4.1.10.0-RELEASE"
-                  :exclusions [[org.slf4j/slf4j-api]
-                               [org.slf4j/slf4j-log4j12]]]
-                 [org.irods.jargon/jargon-ticket "4.1.10.0-RELEASE"
-                  :exclusions [[org.slf4j/slf4j-api]
-                               [org.slf4j/slf4j-log4j12]]]]
+                 [org.cyverse/common-cli "2.8.1"]]
   :repositories [["cyverse-de"
                   {:url "https://raw.github.com/cyverse-de/mvn/master/releases"}]
                  ["dice.repository"
