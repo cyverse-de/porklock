@@ -14,7 +14,7 @@ timestamps {
                 dockerImage.push();
             }
             stage('Test') {
-                dockerImage.inside {
+                dockerImage.inside("--entrypoint=''") {
                   sh "lein test2junit"
                   junit 'test2junit/xml/*.xml'
                 }
