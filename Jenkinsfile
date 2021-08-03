@@ -14,9 +14,12 @@ timestamps {
                 dockerImage.push();
             }
             stage('Test') {
-                dockerImage.inside("--entrypoint=''") {
-                  sh "lein test2junit"
-                  junit 'test2junit/xml/*.xml'
+                try {
+                    sh "docker run --rm -v \$(pwd)/test2junit:/usr/src/app/test2junit --entrypoint 'lein' ${dockerImage.imageName()} test2junit"
+                } finally {
+                    junit 'test2junit/xml/*.xml'
+
+                    sh "docker run --rm -v \$(pwd):/build -w /build alpine rm -r test2junit"
                 }
             }
             stage('Docker Push') {
