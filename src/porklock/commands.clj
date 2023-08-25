@@ -192,7 +192,7 @@
     (let [dest       (ft/path-join (:destination options) "logs")
           exclusions (set (exclude-files-from-dir (merge options {:source (script-loc)})))]
       (porkprint "Exclusions:\n" exclusions)
-      (doseq [fileobj (file-seq (clojure.java.io/file (script-loc)))]
+      (doseq [^java.io.File fileobj (file-seq (clojure.java.io/file (script-loc)))]
         (let [src       (.getAbsolutePath fileobj)
               dest-path (ft/path-join dest (ft/basename src))]
           (try+
@@ -233,7 +233,7 @@
       (when-not (:skip-parent-meta options)
         (porkprint "Applying metadata to" (:destination options))
         (apply-metadata admin-cm (:destination options) (:meta options))
-        (doseq [fileobj (file-seq (info/file cm (:destination options)))]
+        (doseq [^java.io.File fileobj (file-seq (info/file cm (:destination options)))]
           (apply-metadata admin-cm (.getAbsolutePath fileobj) (:meta options))))
 
       ;;; Transfer files from the NFS mount point into the logs
@@ -258,7 +258,7 @@
   (if-not (info/is-dir? cm fpath)
     (if (perms/owns? cm user fpath)
       (apply-metadata cm fpath meta))
-    (doseq [f (file-seq (info/file cm fpath))]
+    (doseq [^java.io.File f (file-seq (info/file cm fpath))]
       (let [abs-path (.getAbsolutePath f)]
         (if (perms/owns? cm user abs-path)
           (apply-metadata cm abs-path meta))))))

@@ -9,7 +9,7 @@
    present under 'parent'."
   [parent]
   (map
-    #(ft/normalize-path (.getAbsolutePath %))
+    #(ft/normalize-path (.getAbsolutePath ^java.io.File %))
     (FileUtils/listFilesAndDirs
       (file parent)
       TrueFileFilter/INSTANCE

@@ -34,7 +34,7 @@
   "Splits up the exclude option and turns the result into paths in the source dir."
   [{source :source exclude-file :exclude delimiter :exclude-delimiter}]
   (mapv
-   #(if-not (.startsWith % "/")
+   #(if-not (string/starts-with? % "/")
      (ft/path-join source %)
      %)
    (paths-to-exclude exclude-file delimiter)))
@@ -59,7 +59,7 @@
    Otherwise, only that exact path matches."
   [path filter-path]
   (if (ft/dir? filter-path)
-    (.startsWith path filter-path)
+    (string/starts-with? path filter-path)
     (= path filter-path)))
 
 (defn should-not-exclude?
@@ -85,7 +85,7 @@
 
 (defn- str-contains?
   [s match]
-  (if (not= (.indexOf s match) -1)
+  (if (not= (string/index-of s match) -1)
     true
     false))
 
