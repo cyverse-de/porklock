@@ -151,7 +151,7 @@
 (def error? (atom false))
 
 (defn- upload-files
-  [cm options]
+  [admin-cm cm options]
   (doseq [[src dest] (seq (relative-destination-paths options))]
     (let [dir-dest (ft/dirname dest)]
       (if-not (or (.isFile (io/file src))
@@ -167,7 +167,7 @@
           ;;; The destination directory needs to be tagged with AVUs
           ;;; for the App and Execution.
           (porkprint "Applying metadata to" dir-dest)
-          (apply-metadata cm dir-dest (:meta options))
+          (apply-metadata admin-cm dir-dest (:meta options))
 
           (try+
            (if (ft/dir? src)
@@ -177,7 +177,7 @@
 
             ;;; Apply the App and Execution metadata to the newly uploaded file/directory.
             (porkprint "Applying metadata to" dest)
-            (apply-metadata cm dest (:meta options))
+            (apply-metadata admin-cm dest (:meta options))
             (catch Object err
               (porkprint "iput failed:" err)
               (reset! error? true))))))))
@@ -187,7 +187,7 @@
              (ft/dirname (ft/abs-path (System/getenv "SCRIPT_LOCATION"))))))
 
 (defn- upload-nfs-files
-  [cm options]
+  [admin-cm cm options]
   (if (and (System/getenv "SCRIPT_LOCATION") (not (:skip-parent-meta options)))
     (let [dest       (ft/path-join (:destination options) "logs")
           exclusions (set (exclude-files-from-dir (merge options {:source (script-loc)})))]
@@ -198,7 +198,7 @@
           (try+
            (when-not (or (.isDirectory fileobj) (contains? exclusions src))
              (retry 10 ops/iput cm src dest tcl)
-             (apply-metadata cm dest-path (:meta options)))
+             (apply-metadata admin-cm dest-path (:meta options)))
            (catch [:error_code "ERR_BAD_EXIT_CODE"] err
              (porkprint "Command exited with a non-zero status:" err)
              (reset! error? true))))))))
@@ -207,40 +207,41 @@
   "Runs the iput icommand, tranferring files from the --source
    to the remote --destination."
   [options]
-  (jg/with-jargon (init-jargon (:config options)) :client-user (:user options) [cm]
-    ;;; The parent directory needs to actually exist, otherwise the dest-dir
-    ;;; doesn't exist and we can't safely recurse up the tree to create the
-    ;;; missing directories. Can't even check the perms safely if it doesn't
-    ;;; exist.
-    (when-not (parent-exists? cm (:destination options))
-      (porkprint (ft/dirname (:destination options)) "does not exist.")
-      (System/exit 1))
+  (jg/with-jargon (init-jargon (:config options)) [admin-cm]
+    (jg/with-jargon (init-jargon (:config options)) :client-user (:user options) [cm]
+      ;;; The parent directory needs to actually exist, otherwise the dest-dir
+      ;;; doesn't exist and we can't safely recurse up the tree to create the
+      ;;; missing directories. Can't even check the perms safely if it doesn't
+      ;;; exist.
+      (when-not (parent-exists? cm (:destination options))
+        (porkprint (ft/dirname (:destination options)) "does not exist.")
+        (System/exit 1))
 
-    ;;; Need to make sure the parent directory is writable just in
-    ;;; case we end up having to create the destination directory under it.
-    (when-not (parent-writeable? cm (:user options) (:destination options))
-      (porkprint (ft/dirname (:destination options)) "is not writeable.")
-      (System/exit 1))
+      ;;; Need to make sure the parent directory is writable just in
+      ;;; case we end up having to create the destination directory under it.
+      (when-not (parent-writeable? cm (:user options) (:destination options))
+        (porkprint (ft/dirname (:destination options)) "is not writeable.")
+        (System/exit 1))
 
-    ;;; Now we can make sure the actual dest-dir is set up correctly.
-    (when-not (info/exists? cm (:destination options))
-      (porkprint "Path" (:destination options) "does not exist. Creating it.")
-      (ops/mkdir cm (:destination options)))
+      ;;; Now we can make sure the actual dest-dir is set up correctly.
+      (when-not (info/exists? cm (:destination options))
+        (porkprint "Path" (:destination options) "does not exist. Creating it.")
+        (ops/mkdir cm (:destination options)))
 
-    (upload-files cm options)
+      (upload-files admin-cm cm options)
 
-    (when-not (:skip-parent-meta options)
-      (porkprint "Applying metadata to" (:destination options))
-      (apply-metadata cm (:destination options) (:meta options))
-      (doseq [fileobj (file-seq (info/file cm (:destination options)))]
-        (apply-metadata cm (.getAbsolutePath fileobj) (:meta options))))
+      (when-not (:skip-parent-meta options)
+        (porkprint "Applying metadata to" (:destination options))
+        (apply-metadata admin-cm (:destination options) (:meta options))
+        (doseq [fileobj (file-seq (info/file cm (:destination options)))]
+          (apply-metadata admin-cm (.getAbsolutePath fileobj) (:meta options))))
 
-    ;;; Transfer files from the NFS mount point into the logs
-    ;;; directory of the destination
-    (upload-nfs-files cm options)
+      ;;; Transfer files from the NFS mount point into the logs
+      ;;; directory of the destination
+      (upload-nfs-files admin-cm cm options)
 
-    (if @error?
-      (throw (Exception. "An error occurred tranferring files into iRODS. Please check the above logs for more information.")))))
+      (if @error?
+        (throw (Exception. "An error occurred tranferring files into iRODS. Please check the above logs for more information."))))))
 
 (defn- parse-source-list
   "Returns a list of paths read from the the given `source-list` path list file, or nil if the file does not exist.
