@@ -1,8 +1,8 @@
 (ns porklock.pathing
-  (:use [clojure.set]
-        [porklock.fileops])
-  (:require [clojure.string :as string]
-            [clojure-commons.file-utils :as ft]))
+  (:require [clojure.set :as set]
+            [clojure.string :as string]
+            [clojure-commons.file-utils :as ft]
+            [porklock.fileops :as fileops]))
 
 (def relative-paths-to-exclude
   [".irods"
@@ -44,13 +44,13 @@
   [{exclude-file :exclude delimiter :exclude-delimiter :as options}]
   (concat
    (exclude-files-from-dir options)
-   (absify (paths-to-exclude exclude-file delimiter))))
+   (fileops/absify (paths-to-exclude exclude-file delimiter))))
 
 (defn include-files
   "Splits up the include option and turns them all into absolute paths."
   [{includes :include delimiter :include-delimiter}]
   (if-not (string/blank? includes)
-    (absify (string/split includes (re-pattern delimiter)))
+    (fileops/absify (string/split includes (re-pattern delimiter)))
     []))
 
 (defn path-matches?
@@ -72,7 +72,7 @@
   "Constructs a list of files that shouldn't be filtered out by the list of
    excluded files."
   [source-dir excludes]
-  (filter #(should-not-exclude? excludes %) (files-and-dirs source-dir)))
+  (filter #(should-not-exclude? excludes %) (fileops/files-and-dirs source-dir)))
 
 (defn files-to-transfer
   "Constructs a list of the files that need to be transferred."
@@ -81,7 +81,7 @@
         excludes (exclude-files options)
         allfiles (set (filtered-files (:source options) excludes))]
     (println "EXCLUDING: " excludes)
-    (filter #(transferable? %1) (vec (union allfiles includes)))))
+    (filter #(fileops/transferable? %1) (vec (set/union allfiles includes)))))
 
 (defn- str-contains?
   [s match]
@@ -104,6 +104,6 @@
       merge
       (sorted-map)
       (map
-        #(if (str-contains? %1 sdir)
+        #(when (str-contains? %1 sdir)
            {%1 (fix-path %1 sdir dest-dir)})
         transfer-files))))

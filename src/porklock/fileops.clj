@@ -1,6 +1,6 @@
 (ns porklock.fileops
-  (:use [clojure.java.io :only (file)])
-  (:require [clojure-commons.file-utils :as ft])
+  (:require [clojure.java.io :refer [file]]
+            [clojure-commons.file-utils :as ft])
   (:import [org.apache.commons.io FileUtils]
            [org.apache.commons.io.filefilter TrueFileFilter DirectoryFileFilter]))
 

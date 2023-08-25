@@ -19,3 +19,4 @@ test2junit
 .idea
 .tramp_history
 .eastwood
+.clj-kondo/.cache
