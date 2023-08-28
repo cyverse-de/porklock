@@ -1,6 +1,6 @@
 (ns porklock.fileops
-  (:use [clojure.java.io :only (file)])
-  (:require [clojure-commons.file-utils :as ft])
+  (:require [clojure.java.io :refer [file]]
+            [clojure-commons.file-utils :as ft])
   (:import [org.apache.commons.io FileUtils]
            [org.apache.commons.io.filefilter TrueFileFilter DirectoryFileFilter]))
 
@@ -9,7 +9,7 @@
    present under 'parent'."
   [parent]
   (map
-    #(ft/normalize-path (.getAbsolutePath %))
+    #(ft/normalize-path (.getAbsolutePath ^java.io.File %))
     (FileUtils/listFilesAndDirs
       (file parent)
       TrueFileFilter/INSTANCE

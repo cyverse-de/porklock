@@ -1,6 +1,4 @@
 (ns porklock.commands
-  (:use [porklock.pathing]
-        [porklock.config])
   (:require [clj-jargon.init :as jg]
             [clj-jargon.item-info :as info]
             [clj-jargon.item-ops :as ops]
@@ -9,23 +7,24 @@
             [clojure-commons.file-utils :as ft]
             [clojure.java.io :as io]
             [clojure.string :as string]
+            [porklock.config :as cfg]
+            [porklock.pathing :as pathing]
             [slingshot.slingshot :refer [throw+ try+]])
-  (:import [java.io File]                                            ; needed for cursive type navigation
-           [org.irods.jargon.core.exception DuplicateDataException]
+  (:import [org.irods.jargon.core.exception DuplicateDataException]
            [org.irods.jargon.core.transfer TransferStatus]))         ; needed for cursive type navigation
 
 (def porkprint (partial println "[porklock] "))
 
 (defn init-jargon
   [cfg-path]
-  (load-config-from-file cfg-path)
-  (jg/init (irods-host)
-           (irods-port)
-           (irods-user)
-           (irods-pass)
-           (irods-home)
-           (irods-zone)
-           (irods-resc)))
+  (cfg/load-config-from-file cfg-path)
+  (jg/init (cfg/irods-host)
+           (cfg/irods-port)
+           (cfg/irods-user)
+           (cfg/irods-pass)
+           (cfg/irods-home)
+           (cfg/irods-zone)
+           (cfg/irods-resc)))
 
 (defn retry
   "Attempt calling (func) with args a maximum of 'times' times if an error occurs.
@@ -94,7 +93,7 @@
   "Callback function for the overallStatus function for a TransferCallbackListener."
   [^TransferStatus transfer-status]
   (let [exc (.getTransferException transfer-status)]
-    (if-not (nil? exc)
+    (when-not (nil? exc)
       (throw exc))))
 
 (defn iput-status-cb
@@ -144,14 +143,14 @@
 
 (defn- relative-destination-paths
   [options]
-  (relative-dest-paths (files-to-transfer options)
+  (pathing/relative-dest-paths (pathing/files-to-transfer options)
                        (ft/abs-path (:source options))
                        (:destination options)))
 
 (def error? (atom false))
 
 (defn- upload-files
-  [cm options]
+  [admin-cm cm options]
   (doseq [[src dest] (seq (relative-destination-paths options))]
     (let [dir-dest (ft/dirname dest)]
       (if-not (or (.isFile (io/file src))
@@ -167,17 +166,17 @@
           ;;; The destination directory needs to be tagged with AVUs
           ;;; for the App and Execution.
           (porkprint "Applying metadata to" dir-dest)
-          (apply-metadata cm dir-dest (:meta options))
+          (apply-metadata admin-cm dir-dest (:meta options))
 
           (try+
            (if (ft/dir? src)
-             (if-not (info/exists? cm dest)
+             (when-not (info/exists? cm dest)
               (ops/mkdir cm dest))
              (retry 10 ops/iput cm src dest tcl))
 
             ;;; Apply the App and Execution metadata to the newly uploaded file/directory.
             (porkprint "Applying metadata to" dest)
-            (apply-metadata cm dest (:meta options))
+            (apply-metadata admin-cm dest (:meta options))
             (catch Object err
               (porkprint "iput failed:" err)
               (reset! error? true))))))))
@@ -187,18 +186,18 @@
              (ft/dirname (ft/abs-path (System/getenv "SCRIPT_LOCATION"))))))
 
 (defn- upload-nfs-files
-  [cm options]
-  (if (and (System/getenv "SCRIPT_LOCATION") (not (:skip-parent-meta options)))
+  [admin-cm cm options]
+  (when (and (System/getenv "SCRIPT_LOCATION") (not (:skip-parent-meta options)))
     (let [dest       (ft/path-join (:destination options) "logs")
-          exclusions (set (exclude-files-from-dir (merge options {:source (script-loc)})))]
+          exclusions (set (pathing/exclude-files-from-dir (merge options {:source (script-loc)})))]
       (porkprint "Exclusions:\n" exclusions)
-      (doseq [fileobj (file-seq (clojure.java.io/file (script-loc)))]
+      (doseq [^java.io.File fileobj (file-seq (clojure.java.io/file (script-loc)))]
         (let [src       (.getAbsolutePath fileobj)
               dest-path (ft/path-join dest (ft/basename src))]
           (try+
            (when-not (or (.isDirectory fileobj) (contains? exclusions src))
              (retry 10 ops/iput cm src dest tcl)
-             (apply-metadata cm dest-path (:meta options)))
+             (apply-metadata admin-cm dest-path (:meta options)))
            (catch [:error_code "ERR_BAD_EXIT_CODE"] err
              (porkprint "Command exited with a non-zero status:" err)
              (reset! error? true))))))))
@@ -207,40 +206,41 @@
   "Runs the iput icommand, tranferring files from the --source
    to the remote --destination."
   [options]
-  (jg/with-jargon (init-jargon (:config options)) :client-user (:user options) [cm]
-    ;;; The parent directory needs to actually exist, otherwise the dest-dir
-    ;;; doesn't exist and we can't safely recurse up the tree to create the
-    ;;; missing directories. Can't even check the perms safely if it doesn't
-    ;;; exist.
-    (when-not (parent-exists? cm (:destination options))
-      (porkprint (ft/dirname (:destination options)) "does not exist.")
-      (System/exit 1))
+  (jg/with-jargon (init-jargon (:config options)) [admin-cm]
+    (jg/with-jargon (init-jargon (:config options)) :client-user (:user options) [cm]
+      ;;; The parent directory needs to actually exist, otherwise the dest-dir
+      ;;; doesn't exist and we can't safely recurse up the tree to create the
+      ;;; missing directories. Can't even check the perms safely if it doesn't
+      ;;; exist.
+      (when-not (parent-exists? cm (:destination options))
+        (porkprint (ft/dirname (:destination options)) "does not exist.")
+        (System/exit 1))
 
-    ;;; Need to make sure the parent directory is writable just in
-    ;;; case we end up having to create the destination directory under it.
-    (when-not (parent-writeable? cm (:user options) (:destination options))
-      (porkprint (ft/dirname (:destination options)) "is not writeable.")
-      (System/exit 1))
+      ;;; Need to make sure the parent directory is writable just in
+      ;;; case we end up having to create the destination directory under it.
+      (when-not (parent-writeable? cm (:user options) (:destination options))
+        (porkprint (ft/dirname (:destination options)) "is not writeable.")
+        (System/exit 1))
 
-    ;;; Now we can make sure the actual dest-dir is set up correctly.
-    (when-not (info/exists? cm (:destination options))
-      (porkprint "Path" (:destination options) "does not exist. Creating it.")
-      (ops/mkdir cm (:destination options)))
+      ;;; Now we can make sure the actual dest-dir is set up correctly.
+      (when-not (info/exists? cm (:destination options))
+        (porkprint "Path" (:destination options) "does not exist. Creating it.")
+        (ops/mkdir cm (:destination options)))
 
-    (upload-files cm options)
+      (upload-files admin-cm cm options)
 
-    (when-not (:skip-parent-meta options)
-      (porkprint "Applying metadata to" (:destination options))
-      (apply-metadata cm (:destination options) (:meta options))
-      (doseq [fileobj (file-seq (info/file cm (:destination options)))]
-        (apply-metadata cm (.getAbsolutePath fileobj) (:meta options))))
+      (when-not (:skip-parent-meta options)
+        (porkprint "Applying metadata to" (:destination options))
+        (apply-metadata admin-cm (:destination options) (:meta options))
+        (doseq [^java.io.File fileobj (file-seq (info/file cm (:destination options)))]
+          (apply-metadata admin-cm (.getAbsolutePath fileobj) (:meta options))))
 
-    ;;; Transfer files from the NFS mount point into the logs
-    ;;; directory of the destination
-    (upload-nfs-files cm options)
+      ;;; Transfer files from the NFS mount point into the logs
+      ;;; directory of the destination
+      (upload-nfs-files admin-cm cm options)
 
-    (if @error?
-      (throw (Exception. "An error occurred tranferring files into iRODS. Please check the above logs for more information.")))))
+      (when @error?
+        (throw (Exception. "An error occurred tranferring files into iRODS. Please check the above logs for more information."))))))
 
 (defn- parse-source-list
   "Returns a list of paths read from the the given `source-list` path list file, or nil if the file does not exist.
@@ -255,11 +255,11 @@
 (defn apply-input-metadata
   [cm user fpath meta]
   (if-not (info/is-dir? cm fpath)
-    (if (perms/owns? cm user fpath)
+    (when (perms/owns? cm user fpath)
       (apply-metadata cm fpath meta))
-    (doseq [f (file-seq (info/file cm fpath))]
+    (doseq [^java.io.File f (file-seq (info/file cm fpath))]
       (let [abs-path (.getAbsolutePath f)]
-        (if (perms/owns? cm user abs-path)
+        (when (perms/owns? cm user abs-path)
           (apply-metadata cm abs-path meta))))))
 
 (defn iget-command

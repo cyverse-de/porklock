@@ -1,14 +1,14 @@
 (ns porklock.core
   (:gen-class)
-  (:use [porklock.commands]
-        [porklock.validation]
-        [slingshot.slingshot :only [try+ throw+]])
   (:require [clojure.tools.cli :as cli]
             [clojure.string :as string]
             [common-cli.version :as version]
             [clojure-commons.error-codes
              :as error
-             :refer [ERR_DOES_NOT_EXIST ERR_NOT_A_FILE ERR_NOT_A_FOLDER ERR_NOT_WRITEABLE]]))
+             :refer [ERR_DOES_NOT_EXIST ERR_NOT_A_FILE ERR_NOT_A_FOLDER ERR_NOT_WRITEABLE]]
+            [porklock.commands :as commands]
+            [porklock.validation :as validation]
+            [slingshot.slingshot :refer [try+]]))
 
 
 (defn- fmeta-split
@@ -187,13 +187,13 @@
 
       (case cmd
         "get"   (do
-                  (validate-get options)
-                  (iget-command options)
+                  (validation/validate-get options)
+                  (commands/iget-command options)
                   (System/exit 0))
 
         "put"   (do
-                  (validate-put options)
-                  (iput-command options)
+                  (validation/validate-put options)
+                  (commands/iput-command options)
                   (System/exit 0))
 
         (do

@@ -1,9 +1,8 @@
 (ns porklock.config
-  (:use [slingshot.slingshot :only [try+ throw+]])
   (:require [clojure-commons.config :as cc]
             [clojure-commons.error-codes :as ce]
             [clojure-commons.file-utils :as cf]
-            [clojure.tools.logging :as log]))
+            [slingshot.slingshot :refer [throw+]]))
 
 (def ^:private props
   "A ref for storing the configuration properties."
