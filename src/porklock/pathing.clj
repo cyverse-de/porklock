@@ -72,7 +72,10 @@
   "Constructs a list of files that shouldn't be filtered out by the list of
    excluded files."
   [source-dir excludes]
-  (filter #(should-not-exclude? excludes %) (fileops/files-and-dirs source-dir)))
+  (let [working-dir (System/getProperty "user.dir")]
+    (->> (fileops/files-and-dirs source-dir)
+         (remove (partial = working-dir))
+         (filter (partial should-not-exclude? excludes)))))
 
 (defn files-to-transfer
   "Constructs a list of the files that need to be transferred."
