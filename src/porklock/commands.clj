@@ -265,8 +265,9 @@
 (defn iget-command
   "Runs the iget icommand, retrieving files from --source and --source-list to the local --destination."
   [{:keys [config user meta source-list source destination]}]
-  (jg/with-jargon (init-jargon config) :client-user user [cm]
-    (let [paths (remove string/blank? (conj (parse-source-list source-list) source))]
-      (doseq [remote-path paths]
-        (apply-input-metadata cm user (ft/rm-last-slash remote-path) meta)
-        (retry 10 ops/iget cm remote-path destination tcl)))))
+  (jg/with-jargon (init-jargon config) [admin-cm]
+    (jg/with-jargon (init-jargon config) :client-user user [cm]
+      (let [paths (remove string/blank? (conj (parse-source-list source-list) source))]
+        (doseq [remote-path paths]
+          (apply-input-metadata admin-cm user (ft/rm-last-slash remote-path) meta)
+          (retry 10 ops/iget cm remote-path destination tcl))))))
