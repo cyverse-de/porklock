@@ -96,36 +96,42 @@
     (when-not (nil? exc)
       (throw exc))))
 
-(defn iput-status-cb
-  "Callback function for the statusCallback function of a TransferCallbackListener."
-  [^TransferStatus transfer-status]
-  (porkprint "-------")
-  (porkprint "iput status update:")
-  (porkprint "\ttransfer state:" (.getTransferState transfer-status))
-  (porkprint "\ttransfer type:" (.getTransferType transfer-status))
-  (porkprint "\tsource path:" (.getSourceFileAbsolutePath transfer-status))
-  (porkprint "\tdest path:" (.getTargetFileAbsolutePath transfer-status))
-  (porkprint "\tfile size:" (.getTotalSize transfer-status))
-  (porkprint "\tbytes transferred:" (.getBytesTransfered transfer-status))
-  (porkprint "\tfiles to transfer:" (.getTotalFilesToTransfer transfer-status))
-  (porkprint "\tfiles skipped:" (.getTotalFilesSkippedSoFar transfer-status))
-  (porkprint "\tfiles transferred:" (.getTotalFilesTransferredSoFar transfer-status))
-  (porkprint "\ttransfer host:" (.getTransferHost transfer-status))
-  (porkprint "\ttransfer zone:" (.getTransferZone transfer-status))
-  (porkprint "\ttransfer resource:" (.getTargetResource transfer-status))
-  (porkprint "-------")
-  (when-let [exc (.getTransferException transfer-status)]
-    (throw exc))
-  ops/continue)
+(defn- status-cb-fn
+  "Returns a callback function for a TransferCallbackListener."
+  [cmd]
+  (fn [^TransferStatus transfer-status]
+    (porkprint "-------")
+    (porkprint cmd "status update:")
+    (porkprint "\ttransfer state:" (.getTransferState transfer-status))
+    (porkprint "\ttransfer type:" (.getTransferType transfer-status))
+    (porkprint "\tsource path:" (.getSourceFileAbsolutePath transfer-status))
+    (porkprint "\tdest path:" (.getTargetFileAbsolutePath transfer-status))
+    (porkprint "\tfile size:" (.getTotalSize transfer-status))
+    (porkprint "\tbytes transferred:" (.getBytesTransfered transfer-status))
+    (porkprint "\tfiles to transfer:" (.getTotalFilesToTransfer transfer-status))
+    (porkprint "\tfiles skipped:" (.getTotalFilesSkippedSoFar transfer-status))
+    (porkprint "\tfiles transferred:" (.getTotalFilesTransferredSoFar transfer-status))
+    (porkprint "\ttransfer host:" (.getTransferHost transfer-status))
+    (porkprint "\ttransfer zone:" (.getTransferZone transfer-status))
+    (porkprint "\ttransfer resource:" (.getTargetResource transfer-status))
+    (porkprint "-------")
+    (when-let [exc (.getTransferException transfer-status)]
+      (throw exc))
+    ops/continue))
 
-(defn- iput-force-cb
-  "Callback function for the transferAsksWhetherToForceOperation function of a
-   TransferCallbackListener."
-   [abs-path collection?]
-   (porkprint "force iput of " abs-path ". collection?: " collection?)
-   ops/yes-for-all)
+(defn- force-cb-fn
+  "Returns a function that can be used to indicate whether or not an operation should be forced. In our case, we always
+   want the operation to be forced."
+  [cmd]
+  (fn [abs-path collection?]
+    (let [object-type (if collection? "collection" "data object")]
+      (porkprint "force" cmd "of" object-type (str abs-path ".")))
+    ops/yes-for-all))
 
-(def tcl (ops/transfer-callback-listener iput-status iput-status-cb iput-force-cb))
+(defn get-tcl
+  "Returns a TransferCallbackListener for the given command."
+  [cmd]
+  (ops/transfer-callback-listener iput-status (status-cb-fn cmd) (force-cb-fn cmd)))
 
 (defn- parent-exists?
   "Returns true if the parent directory exists or is /iplant/home"
@@ -172,7 +178,7 @@
            (if (ft/dir? src)
              (when-not (info/exists? cm dest)
               (ops/mkdir cm dest))
-             (retry 10 ops/iput cm src dest tcl))
+             (retry 10 ops/iput cm src dest (get-tcl "iput")))
 
             ;;; Apply the App and Execution metadata to the newly uploaded file/directory.
             (porkprint "Applying metadata to" dest)
@@ -196,7 +202,7 @@
               dest-path (ft/path-join dest (ft/basename src))]
           (try+
            (when-not (or (.isDirectory fileobj) (contains? exclusions src))
-             (retry 10 ops/iput cm src dest tcl)
+             (retry 10 ops/iput cm src dest (get-tcl "iput"))
              (apply-metadata admin-cm dest-path (:meta options)))
            (catch [:error_code "ERR_BAD_EXIT_CODE"] err
              (porkprint "Command exited with a non-zero status:" err)
@@ -265,8 +271,9 @@
 (defn iget-command
   "Runs the iget icommand, retrieving files from --source and --source-list to the local --destination."
   [{:keys [config user meta source-list source destination]}]
-  (jg/with-jargon (init-jargon config) :client-user user [cm]
-    (let [paths (remove string/blank? (conj (parse-source-list source-list) source))]
-      (doseq [remote-path paths]
-        (apply-input-metadata cm user (ft/rm-last-slash remote-path) meta)
-        (retry 10 ops/iget cm remote-path destination tcl)))))
+  (jg/with-jargon (init-jargon config) [admin-cm]
+    (jg/with-jargon (init-jargon config) :client-user user [cm]
+      (let [paths (remove string/blank? (conj (parse-source-list source-list) source))]
+        (doseq [remote-path paths]
+          (apply-input-metadata admin-cm user (ft/rm-last-slash remote-path) meta)
+          (retry 10 ops/iget cm remote-path destination (get-tcl "iget")))))))

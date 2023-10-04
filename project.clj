@@ -16,15 +16,16 @@
   :main ^:skip-aot porklock.core
   :profiles {:uberjar {:aot :all}}
   :uberjar-name "porklock-standalone.jar"
-  :plugins [[test2junit "1.2.2"]
-            [jonase/eastwood "1.4.0"]]
-  :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/tools.cli "0.3.5"]
-                 [org.clojure/tools.logging "0.3.1"]
-                 [commons-io/commons-io "2.5"]
+  :plugins [[jonase/eastwood "1.4.0"]
+            [lein-ancient "0.7.0"]
+            [test2junit "1.2.2"]]
+  :dependencies [[org.clojure/clojure "1.11.1"]
+                 [org.clojure/tools.cli "1.0.219"]
+                 [org.clojure/tools.logging "1.2.4"]
+                 [commons-io/commons-io "2.14.0"]
                  [slingshot "0.12.2"]
-                 [org.cyverse/clj-jargon "2.8.6"]
-                 [org.cyverse/clojure-commons "2.8.3"]
+                 [org.cyverse/clj-jargon "3.1.0"]
+                 [org.cyverse/clojure-commons "3.0.7"]
                  [org.cyverse/common-cli "2.8.1"]
                  [org.irods.jargon/jargon-core "4.1.10.0-RELEASE"
                   :exclusions [[org.jglobus/JGlobus-Core]
