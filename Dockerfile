@@ -2,7 +2,8 @@ FROM clojure:temurin-25-lein-trixie
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache git
+RUN apt-get update -y && \
+    apt-get install -y git
 
 RUN ln -s "/opt/openjdk-17/bin/java" "/bin/porklock"
 
