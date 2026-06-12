@@ -1,4 +1,4 @@
-FROM FROM clojure:temurin-25-lein-trixie
+FROM clojure:temurin-25-lein-trixie
 
 WORKDIR /usr/src/app
 
