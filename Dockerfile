@@ -1,4 +1,4 @@
-FROM clojure:openjdk-17-lein-alpine
+FROM FROM clojure:temurin-25-lein-trixie
 
 WORKDIR /usr/src/app
 
