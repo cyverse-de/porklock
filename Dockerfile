@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 RUN apt-get update -y && \
     apt-get install -y git
 
-RUN ln -s "/opt/openjdk-17/bin/java" "/bin/porklock"
+RUN ln -s "/opt/java/openjdk/bin/java" "/bin/porklock"
 
 COPY project.clj /usr/src/app/
 RUN lein deps
