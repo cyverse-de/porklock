@@ -72,9 +72,11 @@
   "Constructs a list of files that shouldn't be filtered out by the list of
    excluded files."
   [source-dir excludes]
-  (let [working-dir (System/getProperty "user.dir")]
+  (let [working-dir  (System/getProperty "user.dir")
+        abs-src-dir  (ft/normalize-path (.getAbsolutePath (java.io.File. source-dir)))]
     (->> (fileops/files-and-dirs source-dir)
          (remove (partial = working-dir))
+         (remove (partial = abs-src-dir))
          (filter (partial should-not-exclude? excludes)))))
 
 (defn files-to-transfer
